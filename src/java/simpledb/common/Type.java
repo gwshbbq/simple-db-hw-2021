@@ -11,6 +11,8 @@ import java.io.*;
  * Class representing a type in SimpleDB.
  * Types are static objects defined by this class; hence, the Type
  * constructor is private.
+ * 类表示SimpleDB中的类型。类型是由这个类定义的静态对象;因此，Type构造函数是私有的。
+ * INT_TYPE返回'int'（IntField对象），STRING_TYPE返回'string'（StringField对象）
  */
 public enum Type implements Serializable {
     INT_TYPE() {

@@ -34,6 +34,8 @@ public class Utility {
      * name + n (name1, name2, etc.).
      */
     public static TupleDesc getTupleDesc(int n, String name) {
+//        System.out.println(getTypes(n)[getTypes(n).length - 1]);
+//        System.out.println(getStrings(n, name)[getStrings(n, name).length - 1]);
         return new TupleDesc(getTypes(n), getStrings(n, name));
     }
 
