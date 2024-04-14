@@ -9,6 +9,7 @@ import simpledb.transaction.TransactionId;
 
 import java.io.*;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,14 +33,20 @@ public class BufferPool {
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
+    /**实现LRU算法**/
+    private int numPages;
+    private LRUCache<PageId,Page> buffer;
+//    private LockManager lockManager;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
-     *
+     *后面要改，暂时不支持并发，后期要加锁
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
         // some code goes here
+        this.numPages = numPages;
+
     }
     
     public static int getPageSize() {
@@ -74,7 +81,14 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+         DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+         Page page = dbFile.readPage(pid);
+         if (buffer.getSize() >= numPages) {
+             throw new DbException("Error");
+         }
+         buffer.put(pid, page);
+         return page;
+
     }
 
     /**

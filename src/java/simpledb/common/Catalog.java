@@ -23,8 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
-    private List<Table> tables;
-
+    /**
+     * DbFile自定义接口是磁盘上数据库文件的接口。每个表都由一个 独立的DbFile表示
+     * name就是表的名字；pkeyField就是主键的字段名称。**/
     public class Table {
         private DbFile file;
         private String name;
@@ -60,12 +61,23 @@ public class Catalog {
             this.pkeyField = pkeyField;
         }
 
+        @Override
+        public String toString() {
+            return "Mytable{" +
+                    "file=" + file +
+                    ", name='" + name + '\'' +
+                    ", pkeyField='" + pkeyField + '\'' +
+                    '}';
+        }
+    }
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
+    private List<Table> tables;
     public Catalog() {
         // some code goes here
+        this.tables = new ArrayList<>();
     }
 
     /**
@@ -79,6 +91,18 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+        Table table = new Table(file, name, pkeyField);
+        for(int i=0;i<this.tables.size();i++){
+            Table tmp = this.tables.get(i);
+            if (tmp.getName()==null){
+                continue;
+            }
+            if(tmp.getName().equals(name) || tmp.getFile().getId()==file.getId()){
+                this.tables.set(i,table);
+                return;
+            }
+        }
+        this.tables.add(table);
     }
 
     public void addTable(DbFile file, String name) {
@@ -102,9 +126,32 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        if(name!=null){
+            for(int i=0;i<this.tables.size();i++){
+                if(this.tables.get(i).getName()==null){
+                    continue;
+                }
+                if(this.tables.get(i).getName().equals(name)){
+                    return this.tables.get(i).getFile().getId();
+                }
+            }
+        }
+        throw new NoSuchElementException();
     }
-
+    /**
+     * 通过tableId获取table
+     * @param tableId
+     * @return
+     */
+    public Table getTableById(int tableId){
+        for(int i=0;i<this.tables.size();i++) {
+            Table table = this.tables.get(i);
+            if(table.getFile().getId()==tableId){
+                return table;
+            }
+        }
+        return null;
+    }
     /**
      * Returns the tuple descriptor (schema) of the specified table
      * @param tableid The id of the table, as specified by the DbFile.getId()
@@ -112,8 +159,11 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        Table table = this.getTableById(tableid);
+        if(table!=null){
+            return table.getFile().getTupleDesc();
+        }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -124,27 +174,45 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
+        Table table = this.getTableById(tableid);
+        if(table!=null){
+            return table.getFile();
+        }
         return null;
+
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
+        Table table = this.getTableById(tableid);
+        if(table!=null){
+            return table.getPkeyField();
+        }
         return null;
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+        List<Integer> tableList = new ArrayList<>();
+        for(int i=0;i<this.tables.size();i++){
+            tableList.add(this.tables.get(i).getFile().getId());
+        }
+        return tableList.iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+        Table table = this.getTableById(id);
+        if(table!=null){
+            return table.getName();
+        }
+        throw new NoSuchElementException();
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+        this.tables.clear();
     }
     
     /**
@@ -156,7 +224,6 @@ public class Catalog {
         String baseFolder=new File(new File(catalogFile).getAbsolutePath()).getParent();
         try {
             BufferedReader br = new BufferedReader(new FileReader(catalogFile));
-            
             while ((line = br.readLine()) != null) {
                 //assume line is of the format name (field type, field type, ...)
                 String name = line.substring(0, line.indexOf("(")).trim();

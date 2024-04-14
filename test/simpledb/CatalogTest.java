@@ -39,7 +39,7 @@ public class CatalogTest extends SimpleDbTestBase {
     @Test public void getTupleDesc() {
         TupleDesc expected = Utility.getTupleDesc(2);
         TupleDesc actual = Database.getCatalog().getTupleDesc(id1);
-
+//        System.out.println(Database.getCatalog().getTableName(id1));
         assertEquals(expected, actual);
     }
 
