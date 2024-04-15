@@ -1,6 +1,7 @@
 package simpledb.execution;
 
 import simpledb.common.Database;
+import simpledb.storage.DbFile;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 import simpledb.common.Type;
@@ -36,8 +37,19 @@ public class SeqScan implements OpIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
+    private TransactionId transactionId;
+    private int tableId;
+    private String tableAlias;
+    private DbFileIterator dbFileIterator;
+    private DbFile dbFile;
+
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
         // some code goes here
+        this.transactionId = tid;
+        this.tableId = tableid;
+        this.tableAlias = tableAlias;
+        this.dbFile = Database.getCatalog().getDatabaseFile(this.tableId);
+        this.dbFileIterator = this.dbFile.iterator(this.transactionId);
     }
 
     /**
@@ -46,7 +58,7 @@ public class SeqScan implements OpIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return null;
+        return Database.getCatalog().getTableName(this.tableId);
     }
 
     /**
@@ -55,7 +67,7 @@ public class SeqScan implements OpIterator {
     public String getAlias()
     {
         // some code goes here
-        return null;
+        return this.tableAlias;
     }
 
     /**
@@ -72,14 +84,17 @@ public class SeqScan implements OpIterator {
      */
     public void reset(int tableid, String tableAlias) {
         // some code goes here
+        this.tableId = tableid;
+        this.tableAlias  = tableAlias;
     }
 
     public SeqScan(TransactionId tid, int tableId) {
         this(tid, tableId, Database.getCatalog().getTableName(tableId));
-    }
+    }//tableAlias=Database.getCatalog().getTableName(tableId)?
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+        this.dbFileIterator.open();
     }
 
     /**
@@ -88,32 +103,44 @@ public class SeqScan implements OpIterator {
      * becomes useful when joining tables containing a field(s) with the same
      * name.  The alias and name should be separated with a "." character
      * (e.g., "alias.fieldName").
-     *
+     *返回带有来自底层HeapFile的字段名的TupleDesc，前缀是来自构造函数的tableAlias字符串。
+     *在连接包含同名字段的表时，此前缀非常有用。前缀和名称应该用“。”字符分隔(例如，“alias. fieldname”)。
      * @return the TupleDesc with field names from the underlying HeapFile,
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        TupleDesc tupleDesc = this.dbFile.getTupleDesc();
+        int itemLen = tupleDesc.numFields();
+        Type[] types = new Type[itemLen];
+        String[] fieldNames = new String[itemLen];
+        for(int i=0;i<itemLen;i++){
+            types[i] = tupleDesc.getFieldType(i);
+            fieldNames[i] = this.tableAlias +"."+ tupleDesc.getFieldName(i);
+        }
+        return new TupleDesc(types,fieldNames);
+
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return false;
+        return this.dbFileIterator.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        return this.dbFileIterator.next();
     }
 
     public void close() {
         // some code goes here
+        this.dbFileIterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // some code goes here
+        this.dbFileIterator.rewind();
     }
 }

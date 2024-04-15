@@ -2,7 +2,8 @@ package simpledb.storage;
 
 /** Unique identifier for HeapPage objects. */
 public class HeapPageId implements PageId {
-
+    private int tableId;
+    private int pageNum;
     /**
      * Constructor. Create a page id structure for a specific page of a
      * specific table.
@@ -12,12 +13,14 @@ public class HeapPageId implements PageId {
      */
     public HeapPageId(int tableId, int pgNo) {
         // some code goes here
+        this.tableId = tableId;
+        this.pageNum = pgNo;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
         // some code goes here
-        return 0;
+        return this.tableId;
     }
 
     /**
@@ -26,7 +29,7 @@ public class HeapPageId implements PageId {
      */
     public int getPageNumber() {
         // some code goes here
-        return 0;
+        return this.pageNum;
     }
 
     /**
@@ -37,7 +40,7 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return (this.tableId+"").hashCode() + (this.pageNum+"").hashCode();
     }
 
     /**
@@ -49,6 +52,12 @@ public class HeapPageId implements PageId {
      */
     public boolean equals(Object o) {
         // some code goes here
+        if(o instanceof HeapPageId){
+            HeapPageId heapPageId = (HeapPageId) o;
+            if(this.getTableId()==heapPageId.getTableId() && this.pageNum == heapPageId.getPageNumber()){
+                return true;
+            }
+        }
         return false;
     }
 
@@ -57,13 +66,12 @@ public class HeapPageId implements PageId {
      *  integers, for writing to disk.  Size of returned array must contain
      *  number of integers that corresponds to number of args to one of the
      *  constructors.
+     *  返回此对象的表示形式为整数数组，以便写入磁盘。
      */
     public int[] serialize() {
         int[] data = new int[2];
-
         data[0] = getTableId();
         data[1] = getPageNumber();
-
         return data;
     }
 

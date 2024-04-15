@@ -9,6 +9,7 @@ import java.io.Serializable;
 public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    //这里不同的存储结构，会有不同的page实现
     private PageId pageId;
     private Integer tupleno;
 
@@ -24,6 +25,8 @@ public class RecordId implements Serializable {
      */
     public RecordId(PageId pid, int tupleno) {
         // some code goes here
+        this.pageId = pid;
+        this.tupleno =tupleno;
     }
 
     /**
@@ -31,7 +34,7 @@ public class RecordId implements Serializable {
      */
     public int getTupleNumber() {
         // some code goes here
-        return 0;
+        return this.tupleno;
     }
 
     /**
@@ -39,7 +42,7 @@ public class RecordId implements Serializable {
      */
     public PageId getPageId() {
         // some code goes here
-        return null;
+        return this.pageId;
     }
 
     /**
@@ -51,7 +54,13 @@ public class RecordId implements Serializable {
     @Override
     public boolean equals(Object o) {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        if(o instanceof RecordId) {
+            RecordId recordId =  (RecordId) o;
+            if(recordId.getPageId().equals(this.pageId) && recordId.getTupleNumber() == this.tupleno) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -63,8 +72,15 @@ public class RecordId implements Serializable {
     @Override
     public int hashCode() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return (tupleno+"").hashCode() + (pageId+"").hashCode();
 
+    }
+    @Override
+    public String toString() {
+        return "RecordId{" +
+                "pageId=" + pageId +
+                ", tupleno=" + tupleno +
+                '}';
     }
 
 }

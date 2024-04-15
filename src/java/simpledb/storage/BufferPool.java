@@ -46,6 +46,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         // some code goes here
         this.numPages = numPages;
+        this.buffer  = new LRUCache<>(numPages);
 
     }
     
@@ -78,16 +79,20 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-         DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
-         Page page = dbFile.readPage(pid);
-         if (buffer.getSize() >= numPages) {
-             throw new DbException("Error");
-         }
-         buffer.put(pid, page);
-         return page;
+        if (this.buffer.get(pid)==null) {
+            // find the right page in DBFiles
+            DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            Page page = dbFile.readPage(pid);
+            if (buffer.getSize() >= numPages) {
+                throw new DbException("Error");
+            }
+            buffer.put(pid, page);
+            return page;
+        }
+        return this.buffer.get(pid);
 
     }
 

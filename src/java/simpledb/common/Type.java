@@ -12,7 +12,7 @@ import java.io.*;
  * Types are static objects defined by this class; hence, the Type
  * constructor is private.
  * 类表示SimpleDB中的类型。类型是由这个类定义的静态对象;因此，Type构造函数是私有的。
- * INT_TYPE返回'int'（IntField对象），STRING_TYPE返回'string'（StringField对象）
+ * INT_TYPE的parse方法返回IntField对象(输入流dis中的数据，磁盘数据，int类型)，STRING_TYPE的parse方法返回StringField对象（输入流dis中的数据，磁盘数据，string类型）
  */
 public enum Type implements Serializable {
     INT_TYPE() {
@@ -34,12 +34,12 @@ public enum Type implements Serializable {
         @Override
         public int getLen() {
             return STRING_LEN+4;
-        }
+        }//为什么+4
 
         @Override
         public Field parse(DataInputStream dis) throws ParseException {
             try {
-                int strLen = dis.readInt();
+                int strLen = dis.readInt();//用于从输入流中读取四字节，一个int类型的字节
                 byte[] bs = new byte[strLen];
                 dis.read(bs);
                 dis.skipBytes(STRING_LEN-strLen);

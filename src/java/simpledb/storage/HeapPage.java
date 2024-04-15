@@ -19,11 +19,11 @@ import java.io.*;
  */
 public class HeapPage implements Page {
 
-    final HeapPageId pid;
-    final TupleDesc td;
-    final byte[] header;
-    final Tuple[] tuples;
-    final int numSlots;
+    final HeapPageId pid; //页号
+    final TupleDesc td; //计算每个元组的字节数
+    final byte[] header; //slot槽
+    final Tuple[] tuples;//元组数据？
+    final int numSlots; //槽数，用页大小和元组大小，元组数量计算得到
 
     byte[] oldData;
     private final Byte oldDataLock= (byte) 0;
@@ -32,8 +32,9 @@ public class HeapPage implements Page {
      * Create a HeapPage from a set of bytes of data read from disk.
      * The format of a HeapPage is a set of header bytes indicating
      * the slots of the page that are in use, some number of tuple slots.
-     *  Specifically, the number of tuples is equal to: <p>
-     *          floor((BufferPool.getPageSize()*8) / (tuple size * 8 + 1))
+     *  Specifically, the number of tuples is equal to:
+     *  从一组从磁盘读取的数据字节创建一个HeapPage。HeapPage的格式是一组header字节数组，表示正在使用的页面槽，一定数量的元组槽。
+     * <p> floor((BufferPool.getPageSize()*8) / (tuple size * 8 + 1))
      * <p> where tuple size is the size of tuples in this
      * database table, which can be determined via {@link Catalog#getTupleDesc}.
      * The number of 8-bit header words is equal to:
@@ -43,12 +44,13 @@ public class HeapPage implements Page {
      * @see Database#getCatalog
      * @see Catalog#getTupleDesc
      * @see BufferPool#getPageSize()
+     * byte[] data是输入数据？
      */
     public HeapPage(HeapPageId id, byte[] data) throws IOException {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
-        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
+        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data)); //？？
 
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
@@ -73,7 +75,7 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+        return (int)Math.floor((BufferPool.getPageSize()*8.0)/(td.getSize()*8.0+1.0));
 
     }
 
@@ -84,7 +86,7 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int)Math.ceil(getNumTuples()/8.0);
                  
     }
     
@@ -118,7 +120,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -127,31 +129,33 @@ public class HeapPage implements Page {
     private Tuple readNextTuple(DataInputStream dis, int slotId) throws NoSuchElementException {
         // if associated bit is not set, read forward to the next tuple, and
         // return null.
+        //如果槽位未使用，则通过循环读取整个元组大小的字节来跳过该槽位的内容。如果槽位已经被使用说明有数据，读取数据
+        //这是因为元组在页面中是按固定大小排列的，所以即使某个槽位是空的，也需要跳过它所占用的空间以继续读取下一个槽位
         if (!isSlotUsed(slotId)) {
             for (int i=0; i<td.getSize(); i++) {
                 try {
-                    dis.readByte();
+                    dis.readByte(); //读取整个元组大小的字节来跳过该槽位的内容
                 } catch (IOException e) {
                     throw new NoSuchElementException("error reading empty tuple");
                 }
             }
-            return null;
+            return null; //此时已经定位的下一个槽位了。
         }
 
         // read fields in the tuple
+        //如果槽位已经被使用说明有数据，读取数据：STRING_TYPE/INT_TYPE的parse方法
         Tuple t = new Tuple(td);
-        RecordId rid = new RecordId(pid, slotId);
+        RecordId rid = new RecordId(pid, slotId); //slotId = tupleno
         t.setRecordId(rid);
         try {
             for (int j=0; j<td.numFields(); j++) {
-                Field f = td.getFieldType(j).parse(dis);
+                Field f = td.getFieldType(j).parse(dis);//将dis数据读取并转化为Field字段类型
                 t.setField(j, f);
             }
         } catch (java.text.ParseException e) {
             e.printStackTrace();
             throw new NoSuchElementException("parsing error!");
         }
-
         return t;
     }
 
@@ -165,6 +169,7 @@ public class HeapPage implements Page {
      *
      * @see #HeapPage
      * @return A byte array correspond to the bytes of this page.
+     * 这个方法将页的头部、元组以及填充数据(zero零数据)组合成一个字节数组，将字节数组写入磁盘的页面。
      */
     public byte[] getPageData() {
         int len = BufferPool.getPageSize();
@@ -201,7 +206,7 @@ public class HeapPage implements Page {
             for (int j=0; j<td.numFields(); j++) {
                 Field f = tuples[i].getField(j);
                 try {
-                    f.serialize(dos);
+                    f.serialize(dos); //序列化输入到磁盘
                 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -251,6 +256,13 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        int tupleNumber = t.getRecordId().getTupleNumber();
+        if(isSlotUsed(tupleNumber) && tuples[tupleNumber].equals(t) ){
+            tuples[tupleNumber] = null; //删除数据
+            markSlotUsed(tupleNumber,false); //槽置零
+            return;
+        }
+        throw new DbException("tuple is not in tuples");
     }
 
     /**
@@ -288,7 +300,13 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int count = 0;
+        for(int i=0;i<numSlots;i++){
+            if(((header[i/8]>>(i%8))&1)==0){
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -296,7 +314,9 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        int index = i/8;
+        int offset = i%8;
+        return ((header[index]>>offset)&1) == 1;
     }
 
     /**
@@ -313,7 +333,13 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        List<Tuple> tuples = new ArrayList<>();
+        for(int i=0;i<numSlots;i++){
+            if(isSlotUsed(i)){
+                tuples.add(this.tuples[i]);
+            }
+        }
+        return tuples.iterator();
     }
 
 }
