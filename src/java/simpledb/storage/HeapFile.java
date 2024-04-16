@@ -85,8 +85,10 @@ public class HeapFile implements DbFile {
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(this.file, "r");//选择文件
             randomAccessFile.seek((long)pid.getPageNumber()*pageSize);                 //选择读取的开始位置（页码*页的大小）
-            if(randomAccessFile.read(buf)==-1){                                             //从指定位置读取数据到buf中，-1指没有数据
-                return null;
+            if(randomAccessFile.read(buf)==-1){    //从指定位置读取数据到buf中，不论够不够会返回buf数组，
+                                                    // 然后交给HeapPage封装成page对象；并把字节数据封装成Field对象
+                                                    //这里是只读，没有改变磁盘数据。可以理解为把数据复制到page对象中。
+                return null;                                         //如果没有页了才返回-1
             }
             heapPage= new HeapPage((HeapPageId) pid, buf);
             randomAccessFile.close();

@@ -18,7 +18,7 @@ public class test {
 
         // create the table, associate it with some_data_file.dat
         // and tell the catalog about the schema of this table.
-        HeapFile table1 = new HeapFile(new File("some_data_file1.dat"), descriptor);
+        HeapFile table1 = new HeapFile(new File("some_data_file3.dat"), descriptor);
         Database.getCatalog().addTable(table1, "test");
 
         // construct the query: we use a simple SeqScan, which spoonfeeds

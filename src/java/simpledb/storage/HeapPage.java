@@ -46,6 +46,7 @@ public class HeapPage implements Page {
      * @see BufferPool#getPageSize()
      * byte[] data是输入数据？
      */
+    //初始化的时候，将数据和槽都初始化
     public HeapPage(HeapPageId id, byte[] data) throws IOException {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
@@ -55,7 +56,7 @@ public class HeapPage implements Page {
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
         for (int i=0; i<header.length; i++)
-            header[i] = dis.readByte();
+            header[i] = dis.readByte();     //有点data数据会不满（见HeapFile的readPage()），所以不是所有header[i]都是1
         
         tuples = new Tuple[numSlots];
         try{
