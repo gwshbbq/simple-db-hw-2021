@@ -1,5 +1,6 @@
 package simpledb.storage;
 
+import simpledb.common.DbException;
 import simpledb.execution.Predicate;
 import simpledb.common.Type;
 
@@ -51,8 +52,17 @@ public class IntField implements Field {
      * @throws IllegalCastException if val is not an IntField
      * @see Field#compare
      */
+//    public class IllegalCastException  extends Exception {
+//        private static final long serialVersionUID = 1L;
+//
+//        public IllegalCastException (String s) {
+//            super(s);
+//        }
+//    }
     public boolean compare(Predicate.Op op, Field val) {
-
+//        if(!(val instanceof IntField)) {
+//            throw new IllegalCastException("Not IntField");
+//        }
         IntField iVal = (IntField) val;
 
         switch (op) {

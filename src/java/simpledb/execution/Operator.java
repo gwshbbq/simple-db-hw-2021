@@ -15,6 +15,9 @@ import java.util.NoSuchElementException;
 public abstract class Operator implements OpIterator {
 
     private static final long serialVersionUID = 1L;
+    private Tuple next = null;
+    private boolean open = false;
+    private int estimatedCardinality = 0;
 
     public boolean hasNext() throws DbException, TransactionAbortedException {
         if (!this.open)
@@ -45,6 +48,8 @@ public abstract class Operator implements OpIterator {
      * 
      * @return the next Tuple in the iterator, or null if the iteration is
      *         finished.
+     * if (next == null) {
+     *   next = fetchNext(); 是hashnext()与next()的核心算法，没错next == null执行一次next = fetchNext();
      */
     protected abstract Tuple fetchNext() throws DbException,
             TransactionAbortedException;
@@ -59,9 +64,7 @@ public abstract class Operator implements OpIterator {
         this.open = false;
     }
 
-    private Tuple next = null;
-    private boolean open = false;
-    private int estimatedCardinality = 0;
+
 
     public void open() throws DbException, TransactionAbortedException {
         this.open = true;

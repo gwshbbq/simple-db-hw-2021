@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
+     private List<Table> tables;
     /**
      * DbFile自定义接口是磁盘上数据库文件的接口。每个表都由一个 独立的DbFile表示
      * name就是表的名字；pkeyField就是主键的字段名称。**/
@@ -74,7 +75,7 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
-    private List<Table> tables;
+
     public Catalog() {
         // some code goes here
         this.tables = new ArrayList<>();

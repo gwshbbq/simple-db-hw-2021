@@ -7,13 +7,20 @@ import java.io.Serializable;
 
 /**
  * Predicate compares tuples to a specified Field value.
+ * Field类型的字段与int类型的值比较
+ * 比较元组某个特定的字段--> select * from t where t.a=1;    t.a=1
+ * 只考虑如何比较，不考虑如何找到被比较的字段
  */
 public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private int field; //待比较字段数(值)
+    private Op op; //操作码
+    private Field operand; //比较字段（IntField或StringField）
 
     /** Constants used for return codes in Field.compare */
     public enum Op implements Serializable {
+        //操作：=，>,<,>=,<=,like,<>
         EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS;
 
         /**
@@ -57,8 +64,12 @@ public class Predicate implements Serializable {
      * @param operand
      *            field value to compare passed in tuples to
      */
+
     public Predicate(int field, Op op, Field operand) {
         // some code goes here
+        this.field = field;
+        this.op  = op;
+        this.operand = operand;
     }
 
     /**
@@ -67,7 +78,7 @@ public class Predicate implements Serializable {
     public int getField()
     {
         // some code goes here
-        return -1;
+        return this.field;
     }
 
     /**
@@ -76,16 +87,16 @@ public class Predicate implements Serializable {
     public Op getOp()
     {
         // some code goes here
-        return null;
+        return this.op;
     }
-    
+
     /**
      * @return the operand
      */
     public Field getOperand()
     {
         // some code goes here
-        return null;
+        return this.operand;
     }
     
     /**
@@ -97,10 +108,16 @@ public class Predicate implements Serializable {
      * @param t
      *            The tuple to compare against
      * @return true if the comparison is true, false otherwise.
+     * 利用IntField或者StringField的compare(Predicate.Op op, Field val)方法的返回结果
      */
     public boolean filter(Tuple t) {
         // some code goes here
-        return false;
+        if (t == null) {
+            return false;
+        }
+        Field f = t.getField(this.field);
+        return f.compare(this.op, this.operand);
+
     }
 
     /**
@@ -109,6 +126,10 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // some code goes here
-        return "";
+         return "Predicate{"+
+                "field="+this.field+
+                "op="+this.op+
+                "operand="+this.operand+
+                "}";
     }
 }
