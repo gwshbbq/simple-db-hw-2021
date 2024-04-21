@@ -14,9 +14,9 @@ import java.io.Serializable;
 public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private int field; //待比较字段数(值)
+    private int field; //
     private Op op; //操作码
-    private Field operand; //比较字段（IntField或StringField）
+    private Field operand; //比较字段（IntField或StringField） t.a=1的1
 
     /** Constants used for return codes in Field.compare */
     public enum Op implements Serializable {
